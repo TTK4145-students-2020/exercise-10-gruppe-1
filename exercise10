@@ -1,0 +1,63 @@
+1:
+A = (x -> y -> A).
+B = (y -> x -> B).
+||SYS = (A || B).
+
+Yes - LTSA detects it.
+You can see that x and y are shared actions from the FSP model.
+
+2:
+A = (x -> A | y -> B).
+B = (z -> B).
+||SYS = (A || B).
+progress ZHappens = {z}
+
+3.1:
+P0 = (p0f2g -> p0f0g -> p0f0r -> p0f2r -> P0).
+P1 = (p1f0g -> p1f1g -> p1f1r -> p1f0r -> P1).
+P2 = (p2f1g -> p2f2g -> p2f2r -> p2f1r -> P2).
+F0 = (p0f0g -> p0f0r -> F0 | p1f0g -> p1f0r -> F0).
+F1 = (p2f1g -> p2f1r -> F1 | p1f1g -> p1f1r -> F1).
+F2 = (p0f2g -> p0f2r -> F2 | p2f2g -> p2f2r -> F2).
+||T = (P0 || P1 || P2 || F0 || F1 || F2).
+
+3.2:
+FORK = (get -> rel -> FORK).
+PHIL = ()
+||TABLE = ({p0, p1}::fork0:FORK ||
+           {p1, p2}::fork1:FORK ||
+           {p2, p0}::fork2:FORK).
+F = (get -> rel -> F).
+FORK(I=0) = FORK[0],
+FORK[i:0..1] = ({p[i], p[i+1]}::fork[i]:F),
+FORK[2] = ({p[2], p[0]}::fork[2]:F).
+||FORKS = (FORK(0) || FORK(1) || FORK(2)).
+PHIL(I=0) = PHIL[0],
+PHIL[0] = (p[0].fork[2].get -> p[0].fork[0].get -> p[0].fork[0].rel -> p[0].fork[2].rel -> PHIL[0]),
+PHIL[i:1..2] = (p[i].fork[i-1].get -> p[i].fork[i].get -> p[i].fork[i].rel -> p[i].fork[i-1].rel -> PHIL[i]).
+||PHILS = (PHIL(0) || PHIL(1) || PHIL(2)).
+||TABLE = (FORKS || PHILS).
+FORK(I=0) = FORK[I],
+FORK[i:0..1] = (p[i].fork[i].get -> p[i].fork[i].rel -> FORK[i] | p[i+1].fork[i].get -> p[i+1].fork[i].rel -> FORK[i]),
+FORK[2]       = (p[2].fork[2].get -> p[2].fork[2].rel -> FORK[2] | p[0].fork[2].get -> p[0].fork[2].rel -> FORK[2]).
+||FORKS = (FORK(0) || FORK(1) || FORK(2)).
+PHIL(I=0) = PHIL[I],
+PHIL[0] = (p[0].fork[0].get -> p[0].fork[2].get -> p[0].fork[2].rel -> p[0].fork[0].rel -> PHIL[0]),
+PHIL[i:1..2] = (p[i].fork[i-1].get -> p[i].fork[i].get -> p[i].fork[i].rel -> p[i].fork[i-1].rel -> PHIL[i]).
+||PHILS = (PHIL(0) || PHIL(1) || PHIL(2)).
+||TABLE = (FORKS || PHILS).
+
+3.3:
+const N = 2
+F[i:0..N] = (pick[i] -> put[i] -> FORKS[i]).
+P[0]      = (pick[0] -> pick[N] -> put[N] -> put[0] -> P[0]).
+P[i:1..N] = (pick[i-1] -> pick[i] -> put[i] -> put[i-1] -> P[i]).
+||TABLE = (F || P).
+
+This solves the deadlock, since the last philosopher cannot pick up their right-hand fork if it is taken already.
+
+3.4:
+Some philosopher might starve, which is not nice.
+You can find some solutions here https://en.wikipedia.org/wiki/Dining_philosophers_problem#Solutions
+
+
